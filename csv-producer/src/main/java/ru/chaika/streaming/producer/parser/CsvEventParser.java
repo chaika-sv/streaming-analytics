@@ -39,7 +39,7 @@ public final class CsvEventParser {
         // будет закрыт автоматически, даже если внутри цикла произойдёт исключение.
         try (CSVReader reader = new CSVReader(new FileReader(filePath))) {
 
-            // Первая строка файла — заголовок (event_time,event_type,...).
+            // Первая строка файла — заголовок (event_time, event_type,...).
             // Считываем и просто отбрасываем — она нам не нужна для данных,
             // а порядок колонок уже жёстко зашит в метод toEvent() ниже.
             String[] header = reader.readNext();

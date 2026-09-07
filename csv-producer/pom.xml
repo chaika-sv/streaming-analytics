@@ -10,7 +10,7 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>producer</artifactId>
+    <artifactId>csv-producer</artifactId>
 
     <dependencies>
         <dependency>

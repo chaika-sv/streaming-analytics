@@ -1,0 +1,46 @@
+services:
+  kafka:
+    image: confluentinc/cp-kafka:7.7.1
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      # Три листенера: внутренний (для связи между контейнерами в Docker-сети),
+      # controller (для KRaft — управление метаданными кластера, замена ZooKeeper),
+      # и внешний host-листенер — для подключения с твоей машины (Java-код вне Docker).
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093,PLAINTEXT_HOST://0.0.0.0:9092
+      # Адреса, которые брокер сообщает клиентам как "куда реально подключаться".
+      # Внутри Docker-сети другие контейнеры видят брокер как kafka:29092,
+      # а с хост-машины (твой producer) — как localhost:9092.
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      # Реплика-фактор для системного топика оффсетов. У нас всего 1 брокер,
+      # поэтому реплик больше одной быть не может — иначе брокер не запустится.
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      # Произвольный, но валидный ID кластера — обязателен для инициализации KRaft.
+      KAFKA_CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    volumes:
+      # Именованный volume — данные Kafka переживут перезапуск контейнера
+      # (docker compose stop/start), но исчезнут при docker compose down -v.
+      - kafka-data:/var/lib/kafka/data
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      # Тут используется внутренний адрес (kafka:29092), так как kafka-ui
+      # сам работает внутри Docker-сети, а не на хост-машине.
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+    depends_on:
+      - kafka
+
+volumes:
+  kafka-data:
