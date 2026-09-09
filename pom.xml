@@ -14,6 +14,7 @@
         <module>csv-producer</module>
         <module>flink-job</module>
         <module>web-producer</module>
+        <module>simple-consumer</module>
     </modules>
 
     <properties>
