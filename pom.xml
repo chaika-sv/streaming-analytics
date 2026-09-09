@@ -15,6 +15,7 @@
         <module>flink-job</module>
         <module>web-producer</module>
         <module>simple-consumer</module>
+        <module>spring-consumer</module>
     </modules>
 
     <properties>

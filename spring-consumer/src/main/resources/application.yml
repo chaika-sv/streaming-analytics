@@ -1,0 +1,17 @@
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      # Отдельная consumer group от simple-consumer — иначе они будут
+      # делить партиции между собой (rebalancing), а не читать независимо
+      group-id: spring-consumer-group
+      auto-offset-reset: earliest
+      # По умолчанию Spring Kafka тоже делает auto-commit, как голый Kafka client.
+      # Отключаем, чтобы управлять подтверждением явно через AckMode ниже —
+      # тот же принцип "коммитим после обработки", что и в simple-consumer.
+      enable-auto-commit: false
+    listener:
+      # MANUAL_IMMEDIATE — Spring не коммитит offset автоматически,
+      # мы вызываем Acknowledgment.acknowledge() сами внутри @KafkaListener,
+      # явно показывая момент "я обработал это сообщение".
+      ack-mode: manual_immediate
