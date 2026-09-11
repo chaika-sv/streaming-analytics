@@ -64,5 +64,22 @@
             <version>${flink.version}</version>
         </dependency>
 
+        <!-- Flink JDBC connector — универсальный sink для любых JDBC-совместимых БД -->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-connector-jdbc</artifactId>
+            <version>3.2.0-1.19</version>
+        </dependency>
+
+        <!-- Официальный JDBC-драйвер ClickHouse. Classifier "all" — берём jar
+             со всеми зависимостями драйвера внутри (shaded/fat jar), чтобы не
+             подбирать вручную его собственные транзитивные зависимости. -->
+        <dependency>
+            <groupId>com.clickhouse</groupId>
+            <artifactId>clickhouse-jdbc</artifactId>
+            <version>0.6.3</version>
+            <classifier>all</classifier>
+        </dependency>
+
     </dependencies>
 </project>
