@@ -39,8 +39,15 @@ services:
       # Тут используется внутренний адрес (kafka:29092), так как kafka-ui
       # сам работает внутри Docker-сети, а не на хост-машине.
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      # Регистрируем Kafka Connect worker как часть кластера "local" —
+      # kafka-ui умеет показывать не только топики, но и коннекторы,
+      # если явно указать, где искать Connect REST API.
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: connect
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://kafka-connect:8083
+
     depends_on:
       - kafka
+      - kafka-connect
 
   clickhouse:
     image: clickhouse/clickhouse-server:24.8
@@ -90,6 +97,42 @@ services:
       - grafana-data:/var/lib/grafana
     depends_on:
       - clickhouse
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver
+    ports:
+      - "1433:1433"
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "YourStrong!Passw0rd"
+      MSSQL_PID: Developer
+      # Developer edition включает SQL Server Agent, который ОБЯЗАТЕЛЕН
+      # для работы CDC — это не просто "включить флаг", CDC физически
+      # работает через агентские job'ы, читающие transaction log.
+      MSSQL_AGENT_ENABLED: "true"
+
+  kafka-connect:
+    # Официальный образ Debezium уже включает Kafka Connect worker
+    # со всеми Debezium-коннекторами предустановленными — не нужно
+    # вручную собирать classpath из отдельных jar'ов, как было бы
+    # с "чистым" Kafka Connect образом.
+    image: quay.io/debezium/connect:2.7
+    container_name: kafka-connect
+    ports:
+      - "8083:8083"
+    environment:
+      BOOTSTRAP_SERVERS: kafka:29092
+      GROUP_ID: debezium-connect-group
+      # Kafka Connect в distributed-режиме хранит своё внутреннее состояние
+      # (конфиги коннекторов, offset'ы, статусы) в трёх служебных топиках —
+      # аналог __consumer_offsets, но для самого Connect framework'а.
+      CONFIG_STORAGE_TOPIC: connect-configs
+      OFFSET_STORAGE_TOPIC: connect-offsets
+      STATUS_STORAGE_TOPIC: connect-status
+    depends_on:
+      - kafka
+      - sqlserver
 
 volumes:
   kafka-data:
